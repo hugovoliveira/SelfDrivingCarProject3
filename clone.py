@@ -113,7 +113,8 @@ import gc
 lines.pop(0)
 random.shuffle(lines)
 
-for i in range(0,20):
+for i in range(0,10):
+    print('Era: {}'.format(i))
     for idx,line in enumerate(lines):
         if idx!=0 and (idx%3000 == 0) or (idx == (len(lines)-1)):
             #size(None,160,320,3)
