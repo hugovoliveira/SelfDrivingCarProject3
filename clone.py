@@ -115,14 +115,14 @@ random.shuffle(lines)
 
 for i in range(0,20):
     for idx,line in enumerate(lines):
-        if idx!=0 and (idx%500 == 0) or (idx == (len(lines)-1)):
+        if idx!=0 and (idx%3000 == 0) or (idx == (len(lines)-1)):
             #size(None,160,320,3)
             x_train = np.array(images)     
             y_train = np.array(measurements)
-            model.fit(x_train, y_train,nb_epoch=1, batch_size=500 ,validation_split=0.1,shuffle=False)
+            model.fit(x_train, y_train,nb_epoch=1, batch_size=1500 ,validation_split=0.1,shuffle=False)
             x_train = x_train[::,::,::-1,...]
             y_train = -np.array(measurements)
-            model.fit(x_train, y_train,nb_epoch=1, batch_size=500 ,validation_split=0.1,shuffle=False)
+            model.fit(x_train, y_train,nb_epoch=1, batch_size=1500 ,validation_split=0.1,shuffle=False)
             images = []
             measurements = []
             gc.collect()
