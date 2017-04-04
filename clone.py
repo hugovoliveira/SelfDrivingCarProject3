@@ -1,5 +1,6 @@
 from wget import bar_adaptive
 from numpy import delete
+from test.test_largefile import size
 print('Starting CNN script',  flush=True)
 
 
@@ -108,7 +109,7 @@ from sklearn.model_selection import train_test_split
 train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
 
-def generator(samples, batch_size=32):
+def generator(samples, batch_size=200):
     num_samples = len(samples)
     while 1: # Loop forever so the generator never terminates
         shuffle(samples)
@@ -152,7 +153,9 @@ def generator(samples, batch_size=32):
 
             X_train = np.array(images)
             y_train = np.array(angles)
-            yield sklearn.utils.shuffle(X_train, y_train)
+#             print(len((X_train, y_train)),  flush=True)
+            yield (X_train, y_train)
+            
 
 
 
@@ -160,9 +163,9 @@ train_generator = generator(train_samples, batch_size=32)
 validation_generator = generator(validation_samples, batch_size=32)
 
 
-(model.fit_generator(train_generator, samples_per_epoch= len(train_samples), 
+model.fit_generator(train_generator, samples_per_epoch= len(train_samples), 
                      validation_data=validation_generator, nb_val_samples=len(validation_samples), 
-                     nb_epoch=3))
+                     nb_epoch=3)
         
 
 model.save('model.h5')
