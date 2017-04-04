@@ -8,6 +8,8 @@ import cv2
 import os
 import numpy as np
 import sys
+import sklearn
+from random import shuffle,uniform
 
 print('Libraries imported', flush=True)
 
@@ -20,9 +22,9 @@ from keras.layers.core import Dense, Activation, Flatten, Lambda, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, Cropping2D
 
 model = Sequential()
-# model.add(MaxPooling2D((2, 2),input_shape=(160*3,320,3)))
-model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160,320,3)))
-model.add(Convolution2D(6, 5, 5))
+# model.add(MaxPooling2D((2, 2),input_shape=(160,320,3)))
+# model.add(Cropping2D(cropping=((50,20), (0,0)), ))
+model.add(Convolution2D(6, 5, 5, input_shape=(160,320,3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2)))
 model.add(Convolution2D(16, 5, 5))
@@ -42,7 +44,7 @@ model.compile(loss='mse', optimizer='adam')
 
 print('Model compiled!', flush = True)
     
-lines = []
+samples = []
 firstline = True
 
 # import urllib
@@ -56,8 +58,8 @@ additional_data_zipfile = os.path.join('.','additional_data','IMGho.zip')
 database_dir = os.path.join('.','data')
 database_dir_OK = os.path.isdir(database_dir)
 inputDirDataOK = os.path.isfile(input_data_zipfile)
-AdditionalDataDirOK = os.path.isfile(additional_data_unzipped_dir)
-additional_data_OK = os.path.isdir(additional_data_unzipped_dir)
+AdditionalDataDirOK = os.path.isdir(additional_data_unzipped_dir)
+# additional_data_OK = os.path.isdir(additional_data_unzipped_dir)
 
 training_file = os.path.join('.','data','driving_log.csv')
 trainFileOK = os.path.isfile(training_file)
@@ -100,68 +102,67 @@ else:
 with open(os.path.join('.','driving_log.csv')) as csvfile:
     reader = csv.reader(csvfile)
     for line in reader:
-        lines.append(line)
+        samples.append(line)
+
+from sklearn.model_selection import train_test_split
+train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
 
-images = []
-images_left = []
-images_right = []
-measurements = []
-import random
-import gc
+def generator(samples, batch_size=32):
+    num_samples = len(samples)
+    while 1: # Loop forever so the generator never terminates
+        shuffle(samples)
+        for offset in range(0, num_samples, batch_size):
+            batch_samples = samples[offset:offset+batch_size]
 
-lines.pop(0)
-random.shuffle(lines)
-
-for i in range(0,3):
-    print('Era: {}'.format(i))
-    for idx,line in enumerate(lines):
-        if idx!=0 and (idx%500 == 0) or (idx == (len(lines)-1)):
-            #size(None,160,320,3)
-            x_train = np.array(images)     
-            y_train = np.array(measurements)
-            model.fit(x_train, y_train,nb_epoch=1, batch_size=500 ,validation_split=0.1,shuffle=False)
-            x_train = x_train[::,::,::-1,...]
-            y_train = -np.array(measurements)
-            model.fit(x_train, y_train,nb_epoch=1, batch_size=500 ,validation_split=0.1,shuffle=False)
             images = []
-            measurements = []
-            gc.collect()
+            angles = []
+            for batch_sample in batch_samples:
+                source_path_front = line[0]
+                source_path_left = line[1]
+                source_path_right = line[2]
+                filename_front = source_path_front.split('/')[-1]
+                filename_left = source_path_left.split('/')[-1]
+                filename_right = source_path_right.split('/')[-1]
+                file_dir = source_path_front.split('/')[0]+os.path.sep+source_path_front.split('/')[1]
+                current_path_front = os.path.join('.',file_dir,filename_front)
+                current_path_left = os.path.join('.', file_dir,filename_left)
+                current_path_right = os.path.join('.',file_dir,filename_right)
+                image_front = cv2.imread(current_path_front, cv2.IMREAD_COLOR)
+                image_left = cv2.imread(current_path_left, cv2.IMREAD_COLOR)
+                image_right = cv2.imread(current_path_right, cv2.IMREAD_COLOR)
+                center_angle = float(batch_sample[3])
+                
+                correction = 0.2
+                rand_x = uniform(0,1)
+                if rand_x < 0.2:
+                    image = image_left
+                    measurement = float(line[3]) + correction
+                elif rand_x > 0.8:
+                    image = image_right
+                    measurement = float(line[3])
+                else:
+                    image = image_front
+                    measurement = float(line[3]) - correction
             
-        source_path_front = line[0]
-        source_path_left = line[1]
-        source_path_right = line[2]
-        filename_front = source_path_front.split('/')[-1]
-        filename_left = source_path_left.split('/')[-1]
-        filename_right = source_path_right.split('/')[-1]
+                image = image/255.0 -0.5
+                
+                images.append(image)
+                angles.append(center_angle)
 
-        file_dir = source_path_front.split('/')[0]+os.path.sep+source_path_front.split('/')[1]
+            X_train = np.array(images)
+            y_train = np.array(angles)
+            yield sklearn.utils.shuffle(X_train, y_train)
+
+
+
+train_generator = generator(train_samples, batch_size=32)
+validation_generator = generator(validation_samples, batch_size=32)
+
+
+(model.fit_generator(train_generator, samples_per_epoch= len(train_samples), 
+                     validation_data=validation_generator, nb_val_samples=len(validation_samples), 
+                     nb_epoch=3))
         
-        current_path_front = os.path.join('.',file_dir,filename_front)
-        current_path_left = os.path.join('.', file_dir,filename_left)
-        current_path_right = os.path.join('.',file_dir,filename_right)
-        image_front = cv2.imread(current_path_front, cv2.IMREAD_COLOR)
-        image_left = cv2.imread(current_path_left, cv2.IMREAD_COLOR)
-        image_right = cv2.imread(current_path_right, cv2.IMREAD_COLOR)
-
-        if image_front is None:
-            print(current_path_front + ' was not found', flush = True)
-            
-        correction = 0.2
-        
-        rand_x = random.uniform(0,1)
-        if rand_x < 0.2:
-            image = image_left
-            measurement = float(line[3]) + correction
-        elif rand_x > 0.8:
-            image = image_right
-            measurement = float(line[3])
-        else:
-            image = image_front
-            measurement = float(line[3]) - correction
-
-        image = image/255.0 -0.5
-        images.append(image)
-        measurements.append(measurement)
 
 model.save('model.h5')
