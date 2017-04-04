@@ -99,6 +99,8 @@ with open(os.path.join('.','driving_log.csv')) as csvfile:
     for line in reader:
         samples.append(line)
 
+samples.pop(0)
+
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
