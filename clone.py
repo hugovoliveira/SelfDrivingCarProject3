@@ -1,8 +1,6 @@
 from wget import bar_adaptive
 from numpy import delete
-from test.test_largefile import size
 print('Starting CNN script',  flush=True)
-
 
 import csv
 import cv2
@@ -13,10 +11,6 @@ import sklearn
 from random import shuffle,uniform
 
 print('Libraries imported', flush=True)
-
-
-def kerasCallBack():
-    sys.stdout.flush()
 
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Flatten, Lambda, Dropout
