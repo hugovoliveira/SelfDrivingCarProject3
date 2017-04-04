@@ -130,12 +130,12 @@ def generator(samples, batch_size=200):
                 image_right = cv2.imread(current_path_right, cv2.IMREAD_COLOR)
                 center_angle = float(batch_sample[3])
                 
-                correction = 0.2
+                correction = 0.3
                 rand_x = uniform(0,1)
-                if rand_x < 0.2:
+                if rand_x < 0.33:
                     image = image_left
                     measurement = float(line[3]) + correction
-                elif rand_x > 0.8:
+                elif rand_x > 0.67:
                     image = image_right
                     measurement = float(line[3])
                 else:
