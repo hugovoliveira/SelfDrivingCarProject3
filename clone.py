@@ -173,7 +173,7 @@ def generator(samples, batch_size=200):
             y_train = np.array(angles)
 #             print(y_train)
 #             print(len((X_train, y_train)),  flush=True)
-            yield (X_train, y_train)
+            yield sklearn.utils.shuffle(X_train, y_train)
             
 
 
