@@ -178,8 +178,8 @@ def generator(samples, batch_size=200):
 
 
 
-train_generator = generator(train_samples, batch_size=500)
-validation_generator = generator(validation_samples, batch_size=100)
+train_generator = generator(train_samples, batch_size=250)
+validation_generator = generator(validation_samples, batch_size=50)
 
 
 model.fit_generator(train_generator, samples_per_epoch= len(train_samples), 
