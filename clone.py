@@ -189,7 +189,7 @@ model.fit_generator(train_generator, samples_per_epoch= len(train_samples),
 
 
 print(samples[10][0])
-image = cv2.imread(samples[1:10][0])
+image = [cv2.imread(samples[10][0]),cv2.imread(samples[11][0]),cv2.imread(samples[12][0]),cv2.imread(samples[13][0])]
 image_array = np.asarray(image)
 print('Prediction:')
 print(model.predict(image_array, batch_size=1))
