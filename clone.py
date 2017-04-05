@@ -36,7 +36,7 @@ model.add(Dropout(0.5))
 model.add(Dense(1))
 model.add(Activation('relu'))
 
-model.compile(loss='mse', optimizer='adam')
+model.compile(loss='mae', optimizer='adam')
 
 print('Model compiled!', flush = True)
     
