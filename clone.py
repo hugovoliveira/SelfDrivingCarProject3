@@ -171,6 +171,7 @@ def generator(samples, batch_size=200):
 
             X_train = np.array(images)
             y_train = np.array(angles)
+#             print(y_train)
 #             print(len((X_train, y_train)),  flush=True)
             yield (X_train, y_train)
             
@@ -183,7 +184,7 @@ validation_generator = generator(validation_samples, batch_size=32)
 
 model.fit_generator(train_generator, samples_per_epoch= len(train_samples), 
                      validation_data=validation_generator, nb_val_samples=len(validation_samples), 
-                     nb_epoch=1)
+                     nb_epoch=10)
         
 
 
