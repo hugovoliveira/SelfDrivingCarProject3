@@ -189,9 +189,9 @@ model.fit_generator(train_generator, samples_per_epoch= len(train_samples),
 
 
 print(samples[10][0])
-image = cv2.imread(samples[10][0])
+image = cv2.imread(samples[1:10][0])
 image_array = np.asarray(image)
 print('Prediction:')
-print(model.predict(image_array[None, : , :, :], batch_size=1))
+print(model.predict(image_array, batch_size=1))
 
 model.save('model.h5')
