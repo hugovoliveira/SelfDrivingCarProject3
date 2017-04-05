@@ -9,6 +9,7 @@ import socketio
 import eventlet
 import eventlet.wsgi
 from PIL import Image
+import cv2
 from flask import Flask
 from io import BytesIO
 
@@ -61,10 +62,16 @@ def telemetry(sid, data):
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
+        image = cv2.imread('.\\data\\IMG\\center_2016_12_01_13_31_12_937.jpg')
 #         image.save('{}.jpg'.format('test' + str(timestamp)))
 #         incrementalvar+=1
         image_array = np.asarray(image)
+#         print('Shape: ')
+#         print(image_array.shape)
+#         print('Shape: ')
+#         print(image_array[None, : , :, :].shape)
         print('about to predict')
+        print(model.predict(image_array[None, : , :, :], batch_size=1))
         steering_angle = float(model.predict(image_array[None, : , :, :], batch_size=1))
         print('steering:{}'.format(steering_angle))
         throttle = controller.update(float(speed))

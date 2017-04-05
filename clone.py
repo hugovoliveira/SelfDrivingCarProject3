@@ -104,7 +104,7 @@ with open(os.path.join('.','driving_log.csv')) as csvfile:
         if line[0] != 'center':
             if float(line[3]) != float(0) :
                 samples.append(line)
-                print(str(float(line[3])))
+#                 print(str(float(line[3])))
             elif  (float(line[3]) == float(0)  and (rand_x > 0.9)):
 #                 print('Rand x: ' +str(rand_x))
                 zero_added =zero_added +1;
@@ -187,3 +187,9 @@ model.fit_generator(train_generator, samples_per_epoch= len(train_samples),
         
 
 model.save('model.h5')
+
+
+image = cv2.imread('./data/IMG/center_2016_12_01_13_31_12_937.jpg')
+image_array = np.asarray(image)
+print('Prediction:')
+print(model.predict(image_array[None, : , :, :], batch_size=1))
