@@ -43,7 +43,7 @@ class SimplePIController:
         return self.Kp * self.error + self.Ki * self.integral
 
 
-controller = SimplePIController(0.1, 0.002)
+controller = SimplePIController(0.05, 0.001)
 set_speed = 9
 controller.set_desired(set_speed)
 
@@ -68,7 +68,7 @@ def telemetry(sid, data):
         steering_angle = float(model.predict(image_array[None, : , :, :], batch_size=1))
         print('steering:{}'.format(steering_angle))
         throttle = controller.update(float(speed))
-
+        steering_angle = steering_angle
         print(steering_angle, throttle)
         send_control(steering_angle, throttle)
 
@@ -124,6 +124,7 @@ if __name__ == '__main__':
               ', but the model was built using ', model_version)
 
     model = load_model(args.model)
+    print('Loaded: '+ args.model)
 
     if args.image_folder != '':
         print("Creating image folder at {}".format(args.image_folder))

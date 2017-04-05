@@ -1,5 +1,6 @@
 from wget import bar_adaptive
 from numpy import delete
+from pip._vendor.pyparsing import line
 print('Starting CNN script',  flush=True)
 
 import csv
@@ -94,12 +95,29 @@ if not (database_dir_OK):
 else:
     print('Files OK, download not required.', flush = True)
 
+zero_added =0
+zero_dropped =0
 with open(os.path.join('.','driving_log.csv')) as csvfile:
     reader = csv.reader(csvfile)
     for line in reader:
-        samples.append(line)
+        rand_x = uniform(0,1)
+        if line[0] != 'center':
+            if float(line[3]) != float(0) :
+                samples.append(line)
+                print(str(float(line[3])))
+            elif  (float(line[3]) == float(0)  and (rand_x > 0.9)):
+#                 print('Rand x: ' +str(rand_x))
+                zero_added =zero_added +1;
+                samples.append(line)
+            else:
+                continue
 
-samples.pop(0)
+
+print('Size of sample: '+ str(len(samples)))
+print('Size of zeros: '+ str(zero_added))
+
+
+# print(samples)
 
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples = train_test_split(samples, test_size=0.2)
@@ -115,9 +133,9 @@ def generator(samples, batch_size=200):
             images = []
             angles = []
             for batch_sample in batch_samples:
-                source_path_front = line[0]
-                source_path_left = line[1]
-                source_path_right = line[2]
+                source_path_front = batch_sample[0]
+                source_path_left = batch_sample[1]
+                source_path_right = batch_sample[2]
                 filename_front = source_path_front.split('/')[-1]
                 filename_left = source_path_left.split('/')[-1]
                 filename_right = source_path_right.split('/')[-1]
@@ -134,18 +152,22 @@ def generator(samples, batch_size=200):
                 rand_x = uniform(0,1)
                 if rand_x < 0.33:
                     image = image_left
-                    measurement = float(line[3]) + correction
+                    measurement = center_angle + correction
                 elif rand_x > 0.67:
                     image = image_right
-                    measurement = float(line[3])
+                    measurement = center_angle
                 else:
                     image = image_front
-                    measurement = float(line[3]) - correction
+                    measurement = center_angle - correction
+                
+                if offset % 5 ==0: 
+                    print(measurement,  flush=True)
+
             
                 image = image/255.0 -0.5
                 
                 images.append(image)
-                angles.append(center_angle)
+                angles.append(measurement)
 
             X_train = np.array(images)
             y_train = np.array(angles)
