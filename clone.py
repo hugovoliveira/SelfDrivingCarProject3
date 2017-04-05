@@ -160,8 +160,8 @@ def generator(samples, batch_size=200):
                     image = image_front
                     measurement = center_angle - correction
                 
-                if offset % 5 ==0: 
-                    print(measurement,  flush=True)
+#                 if offset % 5 ==0: 
+#                     print(measurement,  flush=True)
 
             
                 image = image/255.0 -0.5
