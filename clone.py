@@ -19,8 +19,8 @@ from keras.layers.convolutional import Convolution2D, MaxPooling2D, Cropping2D
 
 model = Sequential()
 # model.add(MaxPooling2D((2, 2),input_shape=(160,320,3)))
-# model.add(Cropping2D(cropping=((50,20), (0,0)), ))
-model.add(Convolution2D(6, 5, 5, input_shape=(160,320,3)))
+model.add(Cropping2D(cropping=((60,25), (0,0)), input_shape=(160,320,3)))
+model.add(Convolution2D(6, 5, 5, )
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2)))
 model.add(Convolution2D(16, 5, 5))
@@ -148,12 +148,12 @@ def generator(samples, batch_size=200):
                 image_right = cv2.imread(current_path_right, cv2.IMREAD_COLOR)
                 center_angle = float(batch_sample[3])
                 
-                correction = 0.3
+                correction = 0.1
                 rand_x = uniform(0,1)
-                if rand_x < 0.33:
+                if rand_x < 0.20:
                     image = image_left
                     measurement = center_angle + correction
-                elif rand_x > 0.67:
+                elif rand_x > 0.80:
                     image = image_right
                     measurement = center_angle
                 else:
