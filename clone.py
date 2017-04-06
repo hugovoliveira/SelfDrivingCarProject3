@@ -20,7 +20,7 @@ from keras.layers.convolutional import Convolution2D, MaxPooling2D, Cropping2D
 model = Sequential()
 # model.add(MaxPooling2D((2, 2),input_shape=(160,320,3)))
 model.add(Cropping2D(cropping=((60,25), (0,0)), input_shape=(160,320,3)))
-model.add(Convolution2D(6, 5, 5, )
+model.add(Convolution2D(6, 5, 5))
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2)))
 model.add(Convolution2D(16, 5, 5))
