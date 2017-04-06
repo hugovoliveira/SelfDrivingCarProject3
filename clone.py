@@ -99,12 +99,12 @@ zero_added =0
 zero_dropped =0
 with open(os.path.join('.','driving_log.csv')) as csvfile:
     reader = csv.reader(csvfile)
-    subsample=[]
+#     subsample=[]
     for idx,line in enumerate(reader):
-            subsample.append(line)
-            if idx !=0 and (idx%5 ==0)
-                samples.append(subsample)
-                subsample=[]
+#             subsample.append(line)
+#             if idx !=0 and (idx%5 ==0):
+            samples.append(line)
+#             subsample=[]
                 
 
 print('Size of sample: '+ str(len(samples)))
