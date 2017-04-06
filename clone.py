@@ -36,7 +36,7 @@ model.add(Dropout(0.5))
 model.add(Dense(1))
 model.add(Activation('relu'))
 
-model.compile(loss='mae', optimizer='adam')
+model.compile(loss='mse', optimizer='adam')
 
 print('Model compiled!', flush = True)
     
@@ -99,19 +99,13 @@ zero_added =0
 zero_dropped =0
 with open(os.path.join('.','driving_log.csv')) as csvfile:
     reader = csv.reader(csvfile)
-    for line in reader:
-        rand_x = uniform(0,1)
-        if line[0] != 'center':
-            if float(line[3]) != float(0) :
-                samples.append(line)
-#                 print(str(float(line[3])))
-            elif  (float(line[3]) == float(0)  and (rand_x > 0.9)):
-#                 print('Rand x: ' +str(rand_x))
-                zero_added =zero_added +1;
-                samples.append(line)
-            else:
-                continue
-
+    subsample=[]
+    for idx,line in enumerate(reader):
+            subsample.append(line)
+            if idx !=0 and (idx%5 ==0)
+                samples.append(subsample)
+                subsample=[]
+                
 
 print('Size of sample: '+ str(len(samples)))
 print('Size of zeros: '+ str(zero_added))
@@ -146,7 +140,7 @@ def generator(samples, batch_size=200):
                 image_front = cv2.imread(current_path_front, cv2.IMREAD_COLOR)
                 image_left = cv2.imread(current_path_left, cv2.IMREAD_COLOR)
                 image_right = cv2.imread(current_path_right, cv2.IMREAD_COLOR)
-                center_angle = float(batch_sample[3])
+                center_angle = float(batch_sample[7])
                 
                 correction = 0.1
                 rand_x = uniform(0,1)
