@@ -125,12 +125,12 @@ def generator(samples, batch_size=200):
         shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
-            print(batch_samples[0])
+#             print(batch_samples[0])
             images = []
             angles = []
             for batch_sample in batch_samples:
                 source_path_front = batch_sample[0]
-                print('front: '+ source_path_front)
+#                 print('front: '+ source_path_front)
                 source_path_left = batch_sample[1]
                 source_path_right = batch_sample[2]
                 filename_front = source_path_front.split('/')[-1]
