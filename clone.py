@@ -103,7 +103,8 @@ with open(os.path.join('.','driving_log.csv')) as csvfile:
     for idx,line in enumerate(reader):
 #             subsample.append(line)
 #             if idx !=0 and (idx%5 ==0):
-            samples.append(line)
+#         print(line)    
+        samples.append(line)
 #             subsample=[]
                 
 
@@ -119,15 +120,17 @@ train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
 def generator(samples, batch_size=200):
     num_samples = len(samples)
+    print('Sample size: ' +str(num_samples))
     while 1: # Loop forever so the generator never terminates
         shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
-
+            print(batch_samples[0])
             images = []
             angles = []
             for batch_sample in batch_samples:
                 source_path_front = batch_sample[0]
+                print('front: '+ source_path_front)
                 source_path_left = batch_sample[1]
                 source_path_right = batch_sample[2]
                 filename_front = source_path_front.split('/')[-1]
