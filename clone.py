@@ -128,7 +128,7 @@ train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
 def generator(samples, batch_size=200):
     num_samples = len(samples)
-    print('Sample size: ' +str(num_samples))
+#     print('Sample size: ' +str(num_samples))
     while 1: # Loop forever so the generator never terminates
         shuffle(samples)
         for offset in range(0, num_samples, batch_size):
@@ -158,11 +158,11 @@ def generator(samples, batch_size=200):
                     split_path = path.split('/')
                     paths_converted.append(os.path.join('.',*split_path))
  
-                print(paths_converted[0])
+#                 print(paths_converted[0])
                 image = cv2.imread(paths_converted[0], cv2.IMREAD_COLOR)
 #                 print('Initial size :' + str(image.shape)) 
                 for idx in range(1,5):
-                    print(paths_converted[idx])
+#                     print(paths_converted[idx])
                     image_tmp = cv2.imread(paths_converted[idx], cv2.IMREAD_COLOR)
 #                     print('Image_tmp size :' + str(image_tmp.shape)) 
                     image_cat = np.concatenate((image,image_tmp), axis=0)
