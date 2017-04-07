@@ -1,6 +1,7 @@
 from wget import bar_adaptive
 from numpy import delete
 from pip._vendor.pyparsing import line
+from _csv import reader
 print('Starting CNN script',  flush=True)
 
 import csv
@@ -18,8 +19,8 @@ from keras.layers.core import Dense, Activation, Flatten, Lambda, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, Cropping2D
 
 model = Sequential()
-# model.add(MaxPooling2D((2, 2),input_shape=(160,320,3)))
-model.add(Cropping2D(cropping=((60,25), (0,0)), input_shape=(160,320,3)))
+model.add(MaxPooling2D((2, 2),input_shape=(160*5,320,3)))
+# model.add(Cropping2D(cropping=((60,25), (0,0)), input_shape=(160,320,3)))
 model.add(Convolution2D(6, 5, 5))
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2)))
@@ -97,16 +98,23 @@ else:
 
 zero_added =0
 zero_dropped =0
+sub_sample = []
+fileLines =[]
 with open(os.path.join('.','driving_log.csv')) as csvfile:
     reader = csv.reader(csvfile)
-#     subsample=[]
-    for idx,line in enumerate(reader):
-#             subsample.append(line)
-#             if idx !=0 and (idx%5 ==0):
+    for line in reader:
+        fileLines.append(line)
+    fileLines.pop(0)
+    
+    for idx,line in enumerate(fileLines):
+        if(idx >4):
+            for i in range(0,5):
+                sub_sample.append(fileLines[i])
+            samples.append(sub_sample)
+            sub_sample = []
+
 #         print(line)    
-        samples.append(line)
-#             subsample=[]
-                
+
 
 print('Size of sample: '+ str(len(samples)))
 print('Size of zeros: '+ str(zero_added))
@@ -129,42 +137,43 @@ def generator(samples, batch_size=200):
             images = []
             angles = []
             for batch_sample in batch_samples:
-                source_path_front = batch_sample[0]
-#                 print('front: '+ source_path_front)
-                source_path_left = batch_sample[1]
-                source_path_right = batch_sample[2]
-                filename_front = source_path_front.split('/')[-1]
-                filename_left = source_path_left.split('/')[-1]
-                filename_right = source_path_right.split('/')[-1]
-                file_dir = source_path_front.split('/')[0]+os.path.sep+source_path_front.split('/')[1]
-                current_path_front = os.path.join('.',file_dir,filename_front)
-                current_path_left = os.path.join('.', file_dir,filename_left)
-                current_path_right = os.path.join('.',file_dir,filename_right)
-                image_front = cv2.imread(current_path_front, cv2.IMREAD_COLOR)
-                image_left = cv2.imread(current_path_left, cv2.IMREAD_COLOR)
-                image_right = cv2.imread(current_path_right, cv2.IMREAD_COLOR)
-                center_angle = float(batch_sample[7])
-                
-                correction = 0.1
                 rand_x = uniform(0,1)
+                correction = 0.1
                 if rand_x < 0.20:
-                    image = image_left
-                    measurement = center_angle + correction
+                    img_index = 1
+                    appl_correnction = correction
                 elif rand_x > 0.80:
-                    image = image_right
-                    measurement = center_angle
+                    img_index = 2
+                    appl_correnction  = 0
                 else:
-                    image = image_front
-                    measurement = center_angle - correction
-                
-#                 if offset % 5 ==0: 
-#                     print(measurement,  flush=True)
+                    img_index = 0
+                    appl_correnction = -correction
 
-            
+                source_paths = []
+                for i in range(0,5):
+                    source_paths.append(batch_sample[i][img_index])
+
+                paths_converted = []
+                for idx, path in enumerate(source_paths):
+                    split_path = path.split('/')
+                    paths_converted.append(os.path.join('.',*split_path))
+ 
+                print(paths_converted[0])
+                image = cv2.imread(paths_converted[0], cv2.IMREAD_COLOR)
+#                 print('Initial size :' + str(image.shape)) 
+                for idx in range(1,5):
+                    print(paths_converted[idx])
+                    image_tmp = cv2.imread(paths_converted[idx], cv2.IMREAD_COLOR)
+#                     print('Image_tmp size :' + str(image_tmp.shape)) 
+                    image_cat = np.concatenate((image,image_tmp), axis=0)
+                    image = image_cat
+#                     print('Image size :' + str(image.shape)) 
+                
+                center_angle = float(batch_sample[4][4])
                 image = image/255.0 -0.5
                 
                 images.append(image)
-                angles.append(measurement)
+                angles.append(center_angle + appl_correnction)
 
             X_train = np.array(images)
             y_train = np.array(angles)
