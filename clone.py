@@ -170,7 +170,7 @@ def generator(samples, batch_size=200):
 #                     print('Image size :' + str(image.shape)) 
                 
                 center_angle = float(batch_sample[4][4])
-                image = image/255.0 -0.5
+                expanded_image = expanded_image/255.0 -0.5
                 
                 image_vec.append(expanded_image)
                 angles.append(center_angle + appl_correnction)
@@ -197,13 +197,14 @@ model.fit_generator(train_generator, samples_per_epoch= len(train_samples),
 
 model.save('model.h5')
 
+
 for j in range(5,6000):
     image = cv2.imread(fileLines[10][0])[25:100,:,:]
     for i in range(j-4,j):
         image = np.concatenate((image, cv2.imread(fileLines[10+i][0])[25:100,:,:]),0)
     
     image_array = np.asarray([image])
-    print('Prediction:')
-    print(humodel.predict(image_array, batch_size=1))
+    steering = model.predict(image_array, batch_size=1)
+    print('Prediction: ' +str(steering) )
 
 
