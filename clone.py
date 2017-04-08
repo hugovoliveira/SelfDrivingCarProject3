@@ -134,7 +134,7 @@ def generator(samples, batch_size=200):
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
 #             print(batch_samples[0])
-            images = []
+            image_vec = []
             angles = []
             for batch_sample in batch_samples:
                 rand_x = uniform(0,1)
@@ -159,23 +159,23 @@ def generator(samples, batch_size=200):
                     paths_converted.append(os.path.join('.',*split_path))
  
 #                 print(paths_converted[0])
-                image = cv2.imread(paths_converted[0], cv2.IMREAD_COLOR)[25:100,:,:]
+                expanded_image = np.ndarray([0,320,3])
+                
 #                 print('Initial size :' + str(image.shape)) 
-                for idx in range(1,5):
+                for idx in range(0,5):
 #                     print(paths_converted[idx])
-                    image_tmp = cv2.imread(paths_converted[idx], cv2.IMREAD_COLOR)[25:100,:,:]
+                    new_image = cv2.imread(paths_converted[idx], cv2.IMREAD_COLOR)[60:135,:,:]
 #                     print('Image_tmp size :' + str(image_tmp.shape)) 
-                    image_cat = np.concatenate((image,image_tmp), axis=0)
-                    image = image_cat
+                    expanded_image = np.concatenate((expanded_image, new_image),0)
 #                     print('Image size :' + str(image.shape)) 
                 
                 center_angle = float(batch_sample[4][4])
                 image = image/255.0 -0.5
                 
-                images.append(image)
+                image_vec.append(expanded_image)
                 angles.append(center_angle + appl_correnction)
 
-            X_train = np.array(images)
+            X_train = np.array(image_vec)
             y_train = np.array(angles)
 #             print(y_train)
 #             print(len((X_train, y_train)),  flush=True)
@@ -197,12 +197,13 @@ model.fit_generator(train_generator, samples_per_epoch= len(train_samples),
 
 model.save('model.h5')
 
-image = cv2.imread(fileLines[10][0])[25:100,:,:]
-for i in range(1,5):
-    np.concatenate((image, cv2.imread(fileLines[10][0])[25:100,:,:]),0)
-
-image_array = np.asarray(image)
-print('Prediction:')
-print(model.predict(image_array, batch_size=1))
+for j in range(5,6000):
+    image = cv2.imread(fileLines[10][0])[25:100,:,:]
+    for i in range(j-4,j):
+        image = np.concatenate((image, cv2.imread(fileLines[10+i][0])[25:100,:,:]),0)
+    
+    image_array = np.asarray([image])
+    print('Prediction:')
+    print(humodel.predict(image_array, batch_size=1))
 
 
