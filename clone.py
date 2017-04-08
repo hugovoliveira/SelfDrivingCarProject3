@@ -197,10 +197,7 @@ model.fit_generator(train_generator, samples_per_epoch= len(train_samples),
 
 
 image = [cv2.imread(fileLines[10][0]),cv2.imread(fileLines[11][0]),cv2.imread(fileLines[12][0]),cv2.imread(fileLines[13][0]),cv2.imread(fileLines[13][0])]
-print('Test image shape')
-print(image.shape)
 image_array = np.asarray(image)
 print('Prediction:')
 print(model.predict(image_array, batch_size=1))
-
 model.save('model.h5')
