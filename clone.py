@@ -1,4 +1,5 @@
 from wget import bar_adaptive
+from datetime import datetime
 from numpy import delete
 from pip._vendor.pyparsing import line
 from _csv import reader
@@ -107,10 +108,12 @@ with open(os.path.join('.','driving_log.csv')) as csvfile:
     fileLines.pop(0)
     
     for idx,line in enumerate(fileLines):
-        if(idx >4):
+        if(idx >4 and idx < (len(fileLines) -5)):
             for i in range(0,5):
-                sub_sample.append(fileLines[i])
+                sub_sample.append(fileLines[i+idx])
+#                 print(fileLines[i+idx])
             samples.append(sub_sample)
+#             print('sample added: '+str(idx))
             sub_sample = []
 
 #         print(line)    
@@ -128,9 +131,10 @@ train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
 def generator(samples, batch_size=200):
     num_samples = len(samples)
+    FirstSaved =0;
 #     print('Sample size: ' +str(num_samples))
     while 1: # Loop forever so the generator never terminates
-        shuffle(samples)
+#         shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
 #             print(batch_samples[0])
@@ -163,14 +167,19 @@ def generator(samples, batch_size=200):
                 
 #                 print('Initial size :' + str(image.shape)) 
                 for idx in range(0,5):
-#                     print(paths_converted[idx])
                     new_image = cv2.imread(paths_converted[idx], cv2.IMREAD_COLOR)[60:135,:,:]
-#                     print('Image_tmp size :' + str(image_tmp.shape)) 
                     expanded_image = np.concatenate((expanded_image, new_image),0)
+                    if FirstSaved == 0:
+                        print(paths_converted[idx])
+                    
 #                     print('Image size :' + str(image.shape)) 
                 
                 center_angle = float(batch_sample[4][4])
                 expanded_image = expanded_image/255.0 -0.5
+                if FirstSaved == 0:
+                    timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
+                    cv2.imwrite('{}.jpg'.format(timestamp), (expanded_image+0.5)*int(255))
+                    FirstSaved =1
                 
                 image_vec.append(expanded_image)
                 angles.append(center_angle + appl_correnction)
@@ -179,7 +188,8 @@ def generator(samples, batch_size=200):
             y_train = np.array(angles)
 #             print(y_train)
 #             print(len((X_train, y_train)),  flush=True)
-            yield sklearn.utils.shuffle(X_train, y_train)
+#             yield sklearn.utils.shuffle(X_train, y_train)
+            yield (X_train, y_train)
             
 
 
