@@ -188,16 +188,21 @@ train_generator = generator(train_samples, batch_size=250)
 validation_generator = generator(validation_samples, batch_size=50)
 
 
+
 model.fit_generator(train_generator, samples_per_epoch= len(train_samples), 
                      validation_data=validation_generator, nb_val_samples=len(validation_samples), 
-                     nb_epoch=10)
+                     nb_epoch=8)
         
 
 
+model.save('model.h5')
 
+image = cv2.imread(fileLines[10][0])[25:100,:,:]
+for i in range(1,5):
+    np.concatenate((image, cv2.imread(fileLines[10][0])[25:100,:,:]),0)
 
-image = [cv2.imread(fileLines[10][0]),cv2.imread(fileLines[11][0]),cv2.imread(fileLines[12][0]),cv2.imread(fileLines[13][0]),cv2.imread(fileLines[13][0])]
 image_array = np.asarray(image)
 print('Prediction:')
 print(model.predict(image_array, batch_size=1))
-model.save('model.h5')
+
+
