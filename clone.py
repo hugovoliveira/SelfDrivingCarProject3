@@ -19,7 +19,7 @@ from keras.layers.core import Dense, Activation, Flatten, Lambda, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, Cropping2D
 
 model = Sequential()
-model.add(MaxPooling2D((2, 2),input_shape=(160*5,320,3)))
+model.add(MaxPooling2D((2, 2),input_shape=((160-60-25)*5,320,3)))
 # model.add(Cropping2D(cropping=((60,25), (0,0)), input_shape=(160,320,3)))
 model.add(Convolution2D(6, 5, 5))
 model.add(Activation('relu'))
@@ -159,11 +159,11 @@ def generator(samples, batch_size=200):
                     paths_converted.append(os.path.join('.',*split_path))
  
 #                 print(paths_converted[0])
-                image = cv2.imread(paths_converted[0], cv2.IMREAD_COLOR)
+                image = cv2.imread(paths_converted[0], cv2.IMREAD_COLOR)[25:100,:,:]
 #                 print('Initial size :' + str(image.shape)) 
                 for idx in range(1,5):
 #                     print(paths_converted[idx])
-                    image_tmp = cv2.imread(paths_converted[idx], cv2.IMREAD_COLOR)
+                    image_tmp = cv2.imread(paths_converted[idx], cv2.IMREAD_COLOR)[25:100,:,:]
 #                     print('Image_tmp size :' + str(image_tmp.shape)) 
                     image_cat = np.concatenate((image,image_tmp), axis=0)
                     image = image_cat
