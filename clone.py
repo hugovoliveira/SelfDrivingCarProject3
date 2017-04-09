@@ -167,6 +167,9 @@ def generator(samples, batch_size=200):
  
 #                 print(paths_converted[0])
                 center_angle = float(batch_unit_of_five[4][3])
+                if center_angle ==0:
+                    continue
+                
                 expanded_image = np.ndarray([0,320,3])
                             
 #                 print('Initial size :' + str(image.shape)) 
