@@ -153,16 +153,16 @@ def generator(samples, batch_size=200):
                     appl_correnction = -correction
 
                 source_paths = []
-                print('Source paths')
+#                 print('Source paths')
                 for i in range(0,5):
                     source_paths.append(batch_unit_of_five[i][img_index])
-                    print(batch_unit_of_five[i][img_index])
-                print('\n')
+#                     print(batch_unit_of_five[i][img_index])
+#                 print('\n')
                 
                 paths_converted = []
                 for idx, path in enumerate(source_paths):
                     split_path = path.split('/')
-                    print(split_path)
+#                     print(split_path)
                     paths_converted.append(os.path.join('.',*split_path))
  
 #                 print(paths_converted[0])
@@ -185,7 +185,7 @@ def generator(samples, batch_size=200):
                 if FirstSaved == 0:
                     timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
                     cv2.imwrite('{}.jpg'.format(timestamp), (expanded_image+0.5)*int(255))
-#                     FirstSaved =1
+                    FirstSaved =1
                 
                 image_vec.append(expanded_image)
                 angles.append(center_angle + appl_correnction)
