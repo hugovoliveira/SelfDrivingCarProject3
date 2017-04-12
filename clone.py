@@ -196,6 +196,7 @@ def generator(samples, batch_size=200):
                 steerinc_vec.append(corrected_angle)
 
                 if FirstSaved == 0:
+                    font = cv2.FONT_HERSHEY_SIMPLEX
                     timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
                     img_to_save = (expanded_image+0.5)*int(255)
                     cv2.putText(img_to_save,'Steer :{}'.format(corrected_angle),(0,150), font, 1,(255,255,255),1,cv2.LINE_AA)
