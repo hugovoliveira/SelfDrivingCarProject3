@@ -227,8 +227,8 @@ for j in range(500,550):
     image = image/255.0 -0.5
     for i in range(j-4,j):
         image = np.concatenate((image, cv2.imread(fileLines[10+i][0])[25:100,:,:]),0)
-        cv2.putText(image,fileLines[j][0],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
-        cv2.putText(image,'strng: {}'.format(fileLines[j][3]),(0,60), font, 0.3,(255,255,255),1,cv2.LINE_AA)
+#         cv2.putText(image,fileLines[j][0],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
+#         cv2.putText(image,'strng: {}'.format(fileLines[j][3]),(0,60), font, 0.3,(255,255,255),1,cv2.LINE_AA)
 
     image_array = np.asarray([image])
     steering = model.predict(image_array, batch_size=1)
