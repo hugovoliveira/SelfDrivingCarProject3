@@ -171,8 +171,8 @@ def generator(samples, batch_size=200):
                 rand_x2 = uniform(0,1)
                 if center_angle ==0 and rand_x2>0.03 and(rand_x>0.1 and rand_x<0.9):
                     continue
-                elif:
-                    print('Angle not zero')
+                
+#                     print('Angle not zero')
                 
                 expanded_image = np.ndarray([0,320,3])
                             
