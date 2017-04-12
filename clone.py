@@ -130,76 +130,81 @@ train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 def generator(samples, batch_size=200):
     num_samples = len(samples)
     FirstSaved =0;
-#     print('Sample size: ' +str(num_samples))
+
     while 1: # Loop forever so the generator never terminates
         shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
-#             print(batch_samples[0])
             image_vec = []
-            angles = []
+            steerinc_vec = []
             for batch_unit_of_five in batch_samples:
                 
+                center_angle = (float(batch_unit_of_five[4][3])+float(batch_unit_of_five[3][3]))/2
+
+#                 rand_x2 = uniform(0,1)
+#                 if center_angle ==0 and rand_x2>0.03 and(rand_x>0.1 and rand_x<0.9):
+#                     continue
+                
                 rand_x = uniform(0,1)
-                correction = 0.2
-                if rand_x < 0.10:
+                correction = 0.1
+                if rand_x < 0.33:
                     img_index = 1
                     appl_correnction = correction
-                elif rand_x > 0.90:
+                elif rand_x > 0.67:
                     img_index = 2
-                    appl_correnction  = 0
+                    appl_correnction = -correction
                 else:
                     img_index = 0
-                    appl_correnction = -correction
+                    appl_correnction  = 0
+
 
                 source_paths = []
-#                 print('Source paths')
                 for i in range(0,5):
                     source_paths.append(batch_unit_of_five[i][img_index])
-#                     print(batch_unit_of_five[i][img_index])
-#                 print('\n')
                 
                 paths_converted = []
                 for idx, path in enumerate(source_paths):
                     split_path = path.split('/')
-#                     print(split_path)
                     paths_converted.append(os.path.join('.',*split_path))
- 
-#                 print(paths_converted[0])
-                center_angle = (float(batch_unit_of_five[4][3])+float(batch_unit_of_five[3][3]))/2
 
-                rand_x2 = uniform(0,1)
-                if center_angle ==0 and rand_x2>0.03 and(rand_x>0.1 and rand_x<0.9):
-                    continue
-                
-#                     print('Angle not zero')
-                
                 expanded_image = np.ndarray([0,320,3])
-                            
-#                 print('Initial size :' + str(image.shape)) 
+
+                rand_flip = uniform(0,1)
                 for idx in range(5,0,-1):
                     new_image = cv2.imread(paths_converted[idx-1], cv2.IMREAD_COLOR)[60:135,:,:]
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    cv2.putText(new_image,paths_converted[idx-1],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
-                    cv2.putText(new_image,'idx: {}/strng: {}/rand_x:{:.2f}'.format(idx-1, batch_unit_of_five[idx-1][3], rand_x),(0,60), font, 0.3,(255,255,255),1,cv2.LINE_AA)
+                    if rand_flip>0.5:
+                        new_image = cv2.flip(new_image,1)
+                        
+#                     font = cv2.FONT_HERSHEY_SIMPLEX
+#                     cv2.putText(new_image,paths_converted[idx-1],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
+#                     cv2.putText(new_image,'idx: {}/strng: {}/rand_x:{:.2f}'.format(idx-1, batch_unit_of_five[idx-1][3], rand_x),(0,60), font, 0.3,(255,255,255),1,cv2.LINE_AA)
                     expanded_image = np.concatenate((expanded_image, new_image),0)
                     if FirstSaved == 0:
                         print(paths_converted[idx-1])
-                    
-#                     print('Image size :' + str(image.shape)) 
-                
-                
+
                 expanded_image = expanded_image/255.0 -0.5
+                    
+              
+                corrected_angle = center_angle + appl_correnction
+                image_vec.append(expanded_image)
+                
+                straight_or_flipped = 'straight '
+                if rand_flip>0.5:
+                    corrected_angle = - corrected_angle
+                    straight_or_flipped = 'flipped '
+                    
+                steerinc_vec.append(corrected_angle)
+
                 if FirstSaved == 0:
                     timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
-                    cv2.imwrite('{}.jpg'.format(timestamp), (expanded_image+0.5)*int(255))
+                    img_to_save = (expanded_image+0.5)*int(255)
+                    cv2.putText(img_to_save,'Steer :{}'.format(corrected_angle),(0,150), font, 1,(255,255,255),1,cv2.LINE_AA)
+                    cv2.imwrite(straight_or_flipped + '{}.jpg'.format(timestamp), img_to_save)             
                     FirstSaved =1
-                
-                image_vec.append(expanded_image)
-                angles.append(center_angle + appl_correnction)
+
 
             X_train = np.array(image_vec)
-            y_train = np.array(angles)
+            y_train = np.array(steerinc_vec)
 #             print(y_train)
 #             print(len((X_train, y_train)),  flush=True)
             yield sklearn.utils.shuffle(X_train, y_train)
@@ -208,8 +213,8 @@ def generator(samples, batch_size=200):
 
 
 
-train_generator = generator(train_samples, batch_size=250)
-validation_generator = generator(validation_samples, batch_size=50)
+train_generator = generator(train_samples, batch_size=100)
+validation_generator = generator(validation_samples, batch_size=20)
 
 
 
@@ -227,13 +232,14 @@ for j in range(500,550):
     image = image/255.0 -0.5
     for i in range(j-4,j):
         image = np.concatenate((image, cv2.imread(fileLines[10+i][0])[25:100,:,:]),0)
-#         cv2.putText(image,fileLines[j][0],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
-#         cv2.putText(image,'strng: {}'.format(fileLines[j][3]),(0,60), font, 0.3,(255,255,255),1,cv2.LINE_AA)
+#           cv2.putText(image,'strng: {}'.format(fileLines[j][3]),(0,60), font, 0.3,(255,255,255),1,cv2.LINE_AA)
 
     image_array = np.asarray([image])
     steering = model.predict(image_array, batch_size=1)
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(image,fileLines[j][0],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
     cv2.putText(image,'Steering: '+ str(steering),(150,110), font, 3,(255,255,255),1,cv2.LINE_AA)
-    
     cv2.imwrite('{}.jpg'.format(timestamp), (expanded_image+0.5)*int(255))
 
 
