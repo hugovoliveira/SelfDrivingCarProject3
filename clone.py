@@ -22,7 +22,7 @@ from keras.layers.convolutional import Convolution2D, MaxPooling2D, Cropping2D
 # model.add(Cropping2D(cropping=((60,25), (0,0)), input_shape=(160,320,3)))
 
 model = Sequential()
-model.add(Convolution2D(6, 5, 5, input_shape=((160-60-25)*5,320,3)))
+model.add(Convolution2D(6, 5, 5, input_shape=((160-60-25)*1,320,3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2)))
 model.add(Convolution2D(16, 5, 5))
@@ -139,8 +139,8 @@ def generator(samples, batch_size=200):
             steerinc_vec = []
             for batch_unit_of_five in batch_samples:
                 
-                center_angle = (float(batch_unit_of_five[4][3])+float(batch_unit_of_five[3][3]))/2
-
+#                 center_angle = (float(batch_unit_of_five[4][3])+float(batch_unit_of_five[3][3]))/2
+                center_angle = float(batch_unit_of_five[4][3])
 #                 rand_x2 = uniform(0,1)
 #                 if center_angle ==0 and rand_x2>0.03 and(rand_x>0.1 and rand_x<0.9):
 #                     continue
@@ -182,6 +182,7 @@ def generator(samples, batch_size=200):
                     if FirstSaved == 0:
                         print(paths_converted[idx-1])
 
+                expanded_image = cv2.imread(paths_converted[4], cv2.IMREAD_COLOR)[60:135,:,:]
                 expanded_image = expanded_image/255.0 -0.5
                     
               
@@ -230,14 +231,16 @@ model.save('model.h5')
 
 for j in range(500,550):
     image = cv2.imread(fileLines[j][0])[25:100,:,:]
-    image = image/255.0 -0.5
+    
     for i in range(j-4,j):
         image = np.concatenate((image, cv2.imread(fileLines[10+i][0])[25:100,:,:]),0)
 #           cv2.putText(image,'strng: {}'.format(fileLines[j][3]),(0,60), font, 0.3,(255,255,255),1,cv2.LINE_AA)
 
+    image = cv2.imread(fileLines[10+j][0])[25:100,:,:]
+    image = image/255.0 -0.5
     image_array = np.asarray([image])
     steering = model.predict(image_array, batch_size=1)
-
+    timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(image,fileLines[j][0],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
     cv2.putText(image,'Steering: '+ str(steering),(150,110), font, 3,(255,255,255),1,cv2.LINE_AA)
