@@ -19,10 +19,10 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Flatten, Lambda, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, Cropping2D
 
-model = Sequential()
-model.add(MaxPooling2D((2, 2),input_shape=((160-60-25)*5,320,3)))
 # model.add(Cropping2D(cropping=((60,25), (0,0)), input_shape=(160,320,3)))
-model.add(Convolution2D(6, 5, 5))
+
+model = Sequential()
+model.add(Convolution2D(6, 5, 5),input_shape=((160-60-25)*5,320,3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2)))
 model.add(Convolution2D(16, 5, 5))
@@ -31,14 +31,14 @@ model.add(MaxPooling2D((2, 2)))
 model.add(Flatten())
 model.add(Dense(40))
 model.add(Activation('relu'))
-model.add(Dropout(0.5))
+model.add(Dropout(0.7))
 model.add(Dense(30))
 model.add(Activation('relu'))
-model.add(Dropout(0.5))
+model.add(Dropout(0.7))
 model.add(Dense(1))
 model.add(Activation('relu'))
 
-model.compile(loss='mse', optimizer='adam')
+model.compile(loss='mae', optimizer='adam')
 
 print('Model compiled!', flush = True)
     
@@ -141,11 +141,11 @@ def generator(samples, batch_size=200):
             for batch_unit_of_five in batch_samples:
                 
                 rand_x = uniform(0,1)
-                correction = 0.1
-                if rand_x < 0.20:
+                correction = 0.2
+                if rand_x < 0.10:
                     img_index = 1
                     appl_correnction = correction
-                elif rand_x > 0.80:
+                elif rand_x > 0.90:
                     img_index = 2
                     appl_correnction  = 0
                 else:
@@ -166,8 +166,11 @@ def generator(samples, batch_size=200):
                     paths_converted.append(os.path.join('.',*split_path))
  
 #                 print(paths_converted[0])
-                center_angle = float(batch_unit_of_five[4][3])
-                if center_angle ==0:
+                center_angle = (float(batch_unit_of_five[4][3])+float(batch_unit_of_five[3][3]))/2
+
+                rand_x2 = uniform(0,1)
+                if center_angle ==0 and rand_x2>0.03 and(rand_x>0.1 and rand_x<0.9):
+                    print('Deleted sample')
                     continue
                 
                 expanded_image = np.ndarray([0,320,3])
@@ -175,8 +178,9 @@ def generator(samples, batch_size=200):
 #                 print('Initial size :' + str(image.shape)) 
                 for idx in range(5,0,-1):
                     new_image = cv2.imread(paths_converted[idx-1], cv2.IMREAD_COLOR)[60:135,:,:]
-#                     font = cv2.FONT_HERSHEY_SIMPLEX
-#                     cv2.putText(new_image,paths_converted[idx-1][-10:]+ ' - idx: {} - strng: {}'.format(idx-1, center_angle),(0,30), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    cv2.putText(new_image,paths_converted[idx-1],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
+                    cv2.putText(new_image,'idx: {}/strng: {}/rand_x:{:.2f}'.format(idx-1, batch_unit_of_five[idx-1][3], rand_x),(0,60), font, 0.3,(255,255,255),1,cv2.LINE_AA)
                     expanded_image = np.concatenate((expanded_image, new_image),0)
                     if FirstSaved == 0:
                         print(paths_converted[idx-1])
@@ -217,13 +221,22 @@ model.fit_generator(train_generator, samples_per_epoch= len(train_samples),
 model.save('model.h5')
 
 
-for j in range(5,6000):
-    image = cv2.imread(fileLines[10][0])[25:100,:,:]
+for j in range(500,550):
+    image = cv2.imread(fileLines[j][0])[25:100,:,:]
+    image = image/255.0 -0.5
     for i in range(j-4,j):
         image = np.concatenate((image, cv2.imread(fileLines[10+i][0])[25:100,:,:]),0)
-    
+        cv2.putText(image,fileLines[j][0],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
+        cv2.putText(image,'strng: {}'.format(fileLines[j][3]),(0,60), font, 0.3,(255,255,255),1,cv2.LINE_AA)
+
     image_array = np.asarray([image])
     steering = model.predict(image_array, batch_size=1)
+    cv2.putText(image,'Steering: '+ str(steering),(150,110), font, 3,(255,255,255),1,cv2.LINE_AA)
+    
+    cv2.imwrite('{}.jpg'.format(timestamp), (expanded_image+0.5)*int(255))
+
+
+
     print('Prediction: ' +str(steering) )
 
 
