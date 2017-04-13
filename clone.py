@@ -254,7 +254,7 @@ for j in range(500,550):
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(image,fileLines[j][0],(0,30), font, 0.3,(255,255,255),1,cv2.LINE_AA)
     cv2.putText(image,'Steering: '+ str(steering),(150,110), font, 3,(255,255,255),1,cv2.LINE_AA)
-    cv2.imwrite('{}.jpg'.format(timestamp), (expanded_image+0.5)*int(255))
+    cv2.imwrite('{}.jpg'.format(timestamp), (image+0.5)*int(255))
 
 
 
