@@ -117,7 +117,7 @@ with open(os.path.join('.','driving_log.csv')) as csvfile:
                 
 samples =[]
 
-correction = 0.1
+correction = 0.2
 
 for line in fileLines:
     for i in range(0,3):
@@ -187,5 +187,6 @@ model.save('model.h5')
 
 for j in range(500,550):
     image = cv2.imread(fileLines[j][0])[25:100,:,:]
-    steering = model.predict([image], batch_size=1)
+    image_array = np.asarray([image])
+    steering = model.predict(image_array, batch_size=1)
     print('Prediction: ' +str(steering))
