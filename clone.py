@@ -103,9 +103,19 @@ sub_sample = []
 fileLines =[]
 with open(os.path.join('.','driving_log.csv')) as csvfile:
     reader = csv.reader(csvfile)
+    ten_counter = 0;
+    next(reader)
     for line in reader:
-        fileLines.append(line)
-    fileLines.pop(0)
+        if (abs(float(line[3])) > 0.01):
+            fileLines.append(line)
+        else:
+            if (ten_counter == 0):
+                fileLines.append(line) 
+            ten_counter = ten_counter+1
+            if ten_counter > 9:
+                ten_counter =0
+                
+#     fileLines.pop(0)
     
     for idx,line in enumerate(fileLines):
         if(idx >4):
