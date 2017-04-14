@@ -25,18 +25,15 @@ model = Sequential()
 model.add(Convolution2D(6, 5, 5, input_shape=((160-60-25)*1,320,3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2)))
-model.add(Convolution2D(16, 5, 5))
+model.add(Convolution2D(6, 5, 5))
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2)))
 model.add(Flatten())
-model.add(Dense(40))
-model.add(Activation('relu'))
-model.add(Dropout(0.7))
-model.add(Dense(30))
-model.add(Activation('relu'))
-model.add(Dropout(0.7))
+model.add(Dense(120))
+model.add(Dropout(0.5))
+model.add(Dense(84))
+model.add(Dropout(0.5))
 model.add(Dense(1))
-model.add(Activation('relu'))
 
 model.compile(loss='mae', optimizer='adam')
 
@@ -112,36 +109,57 @@ with open(os.path.join('.','driving_log.csv')) as csvfile:
             if (ten_counter == 0):
                 fileLines.append(line) 
             ten_counter = ten_counter+1
-            if ten_counter > 9:
+            if ten_counter > 4:
                 ten_counter =0
                 
 samples =[]
 steer_abs_sum = 0
-correction = 0.1
+steer_sum = 0
+correction = 0.2
 
 
 for line in fileLines:
-    steer_angle = -float(line[3])
-    samples.append([line[0], steer_angle, 'front camera - flip'])
-    steer_abs_sum = steer_abs_sum + abs(steer_angle)
-    for i in range(0,3):
-        if i==0:
+#     steer_angle = -float(line[3])
+#     samples.append([line[0], steer_angle, 'front camera - flip'])
+#     steer_abs_sum = steer_abs_sum + abs(steer_angle)
+#     steer_sum = steer_sum + steer_angle    
+    for i in range(0,6):
+        if  i == 0:
             steer_angle = float(line[3])
-            samples.append([line[i], steer_angle, 'front camera'])
-            steer_abs_sum = steer_abs_sum + abs(steer_angle)      
+            samples.append([line[0], steer_angle, 'front camera'])
+            steer_abs_sum = steer_abs_sum + abs(steer_angle)  
+            steer_sum = steer_sum + steer_angle                  
         elif i == 1:
             steer_angle = float(line[3])+correction
-            samples.append([line[i], steer_angle, 'left camera'])
-            steer_abs_sum = steer_abs_sum + abs(steer_angle) 
-        else: #i==2
+            samples.append([line[1], steer_angle, 'left camera'])
+            steer_abs_sum = steer_abs_sum + abs(steer_angle)
+            steer_sum = steer_sum + steer_angle     
+        elif i == 2:
             steer_angle = float(line[3])-correction
-            samples.append([line[i], steer_angle, 'right camera'])
-            steer_abs_sum = steer_abs_sum + abs(steer_angle) 
-
-
+            samples.append([line[2], steer_angle, 'right camera'])
+            steer_abs_sum = steer_abs_sum + abs(steer_angle)
+            steer_sum = steer_sum + steer_angle
+        elif i == 3:
+            steer_angle = -float(line[3])
+            samples.append([line[0], steer_angle, 'front flip'])
+            steer_abs_sum = steer_abs_sum + abs(steer_angle)  
+            steer_sum = steer_sum + steer_angle                  
+        elif i == 4:
+            steer_angle = -(float(line[3])+correction)
+            samples.append([line[1], steer_angle, 'left flip'])
+            steer_abs_sum = steer_abs_sum + abs(steer_angle)
+            steer_sum = steer_sum + steer_angle     
+        elif i == 5:
+            steer_angle = -(float(line[3])-correction)
+            samples.append([line[2], steer_angle, 'right flip'])
+            steer_abs_sum = steer_abs_sum + abs(steer_angle)
+            steer_sum = steer_sum + steer_angle
+        
+mean_steering = steer_sum/float(len(samples))
 steer_abs_mean = steer_abs_sum/float(len(samples))
 
-print('Mean steering angle =  ' + str(steer_abs_mean))
+print('Mean steering angle: ' + str(steer_abs_mean))
+print('Mean steering: ', mean_steering)
 
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples = train_test_split(samples, test_size=0.2)
@@ -165,8 +183,10 @@ def generator(samples, batch_size=100):
                 converted_path = os.path.join('.',*path_split)
 
                 image = cv2.imread(converted_path, cv2.IMREAD_COLOR)[60:135,:,:]
-                if batch_a_sample[2] == 'front camera - flip':
-                    image = cv2.flip(image,1)                    
+#                 print(batch_a_sample[2][-3:])
+                if batch_a_sample[2][-4:] == 'flip':
+                    image = cv2.flip(image,1)
+#                     print('Flipped')                    
 
                 timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
                 marked_image = image.copy()
@@ -196,16 +216,16 @@ validation_generator = generator(validation_samples, batch_size=20)
 
 model.fit_generator(train_generator, samples_per_epoch= len(train_samples), 
                      validation_data=validation_generator, nb_val_samples=len(validation_samples), 
-                     nb_epoch=16)
+                     nb_epoch=10)
         
 
 
 model.save('model.h5')
 
 
-for j in range(500,550):
+for j in range(500,2000):
     image = cv2.imread(fileLines[j][0])[25:100,:,:]
     image_array = np.asarray([image])
     image_array = image_array/255.0 - 0.5
     steering = model.predict(image_array, batch_size=1)
-    print('Prediction: ' +str(steering))
+    print('Prediction: ' +str(steering) + '. Actual: ' + fileLines[j][3])
