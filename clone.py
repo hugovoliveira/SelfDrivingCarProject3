@@ -33,11 +33,11 @@ model.add(Convolution2D(64, 3, 3, subsample=(2, 2), activation = 'relu'))
 model.add(Convolution2D(64, 3, 3, subsample=(2, 2), activation = 'relu'))
 model.add(Flatten())
 model.add(Dense(100))
-model.add(Dropout(0.5))
+model.add(Dropout(0.7))
 model.add(Dense(50))
-model.add(Dropout(0.5))
+model.add(Dropout(0.7))
 model.add(Dense(10))
-model.add(Dropout(0.5))
+model.add(Dropout(0.7))
 model.add(Dense(1))
     
 earlyStopping = EarlyStopping(monitor='val_loss', min_delta=0.001, patience=2, verbose=1, mode='auto')
@@ -97,7 +97,7 @@ with open(os.path.join('.','driving_log.csv')) as csvfile:
     general_counter = 0
     next(reader)
     for line in reader:
-        if (abs(float(line[3])) > 0.01):
+        if (abs(float(line[3])) > 0.005):
             fileLines.append(line)
             general_counter = general_counter+1
         else:
@@ -125,13 +125,9 @@ for additional_data_set in additional_data_list:
 samples =[]
 steer_abs_sum = 0
 steer_sum = 0
-correction = 0.15
+correction = 0.1
 recover_correction = 0.15
 for line in fileLines:
-#     steer_angle = -float(line[7])
-#     samples.append([line[0], steer_angle, 'front camera - flip'])
-#     steer_abs_sum = steer_abs_sum + abs(steer_angle)
-#     steer_sum = steer_sum + steer_angle    
     for i in range(0,6):
         if  i == 0:
             steer_angle = float(line[3])
@@ -148,7 +144,6 @@ for line in fileLines:
                 samples.append([line[1], steer_angle, 'left camera'])
                 steer_abs_sum = steer_abs_sum + abs(steer_angle)
                 steer_sum = steer_sum + steer_angle     
-
         elif i == 2:
             if 'recovery left' not in line[0]:            
                 steer_angle = float(line[3])-correction
@@ -200,20 +195,14 @@ def generator(samples, batch_size=64):
                 angle = batch_a_sample[1]
                 path_split = batch_a_sample[0].split('/')
                 converted_path = os.path.join('.',*path_split)
-#                 print(converted_path)
-
-#                 print(converted_path,flush=True)
                 image = cv2.imread(converted_path, cv2.IMREAD_COLOR)[60:135,:,:]
-#                 print(batch_a_sample[2][-3:])
                 if batch_a_sample[2][-4:] == 'flip':
                     image = cv2.flip(image,1)
-#                     print('Flipped')                    
 
                 timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
                 marked_image = image.copy()
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 cv2.putText(marked_image, batch_a_sample[2] + 'Strng:' + str(angle),(20,60), font, 0.5,(255,255,255),1,cv2.LINE_AA)
-#                 cv2.imwrite(timestamp +'.jpg', marked_image)            
                 image = image/255.0 -0.5
                 image_vec.append(image)
                 steerinc_vec.append(angle)
@@ -221,11 +210,7 @@ def generator(samples, batch_size=64):
 
             X_train = np.array(image_vec)
             y_train = np.array(steerinc_vec)
-#             print(len(y_train))
-#             print(y_train)
-#             print(len((X_train, y_train)),  flush=True)
             yield sklearn.utils.shuffle(X_train, y_train)
-#             yield (X_train, y_train)
             
 
 
