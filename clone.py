@@ -15,26 +15,32 @@ from random import shuffle,uniform
 
 print('Libraries imported', flush=True)
 
+
+from keras.callbacks import EarlyStopping
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Flatten, Lambda, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, Cropping2D
 
 # model.add(Cropping2D(cropping=((60,25), (0,0)), input_shape=(160,320,3)))
 
+
+
 model = Sequential()
-model.add(Convolution2D(6, 5, 5, input_shape=((160-60-25)*1,320,3)))
-model.add(Activation('relu'))
-model.add(MaxPooling2D((2, 2)))
-model.add(Convolution2D(6, 5, 5))
-model.add(Activation('relu'))
-model.add(MaxPooling2D((2, 2)))
+model.add(Convolution2D(24, 5, 5, input_shape=((160-60-25)*1,320,3), subsample=(2, 2), activation = 'relu'))
+model.add(Convolution2D(36, 5, 5, subsample=(2, 2), activation = 'relu'))
+model.add(Convolution2D(48, 3, 3, subsample=(2, 2), activation = 'relu'))
+model.add(Convolution2D(64, 3, 3, subsample=(2, 2), activation = 'relu'))
+model.add(Convolution2D(64, 3, 3, subsample=(2, 2), activation = 'relu'))
 model.add(Flatten())
-model.add(Dense(120))
+model.add(Dense(100))
 model.add(Dropout(0.5))
-model.add(Dense(84))
+model.add(Dense(50))
+model.add(Dropout(0.5))
+model.add(Dense(10))
 model.add(Dropout(0.5))
 model.add(Dense(1))
-
+    
+earlyStopping = EarlyStopping(monitor='val_loss', min_delta=0.001, patience=2, verbose=1, mode='auto')
 model.compile(loss='mae', optimizer='adam')
 
 print('Model compiled!', flush = True)
@@ -45,37 +51,24 @@ firstline = True
 # import urllib
 import wget
 import zipfile
+import shutil
+
 
 input_data_zipfile = os.path.join('.','input','data.zip')
-additional_data_dir = os.path.join('.','additional_data')
-additional_data_unzipped_dir = os.path.join('.','additional_data','IMGho')
-additional_data_zipfile = os.path.join('.','additional_data','IMGho.zip')
+additional_data_dir = 'additional_data'
 database_dir = os.path.join('.','data')
 database_dir_OK = os.path.isdir(database_dir)
-inputDirDataOK = os.path.isfile(input_data_zipfile)
-AdditionalDataDirOK = os.path.isdir(additional_data_unzipped_dir)
-# additional_data_OK = os.path.isdir(additional_data_unzipped_dir)
-
 training_file = os.path.join('.','data','driving_log.csv')
 trainFileOK = os.path.isfile(training_file)
 
-import shutil
-if inputDirDataOK:
-    if not database_dir_OK:
-        os.mkdir('data')
-    shutil.copy(input_data_zipfile, database_dir)
+additional_data_list = [ name for name in os.listdir(additional_data_dir) if (os.path.isdir(os.path.join(additional_data_dir, name)) and name[0:3]!='skp') ]
 
-if not AdditionalDataDirOK:
-    zip_ref2 = zipfile.ZipFile(additional_data_zipfile, 'r')
-    zip_ref2.extractall(additional_data_dir)
-        
 if not (database_dir_OK):
     print('Downloading database...', flush = True)
     fileaddress = 'https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip'
     zipdir = 'output'
     print('starting wget to:' +'.'+os.path.sep+zipdir,  flush=True)
     file_name = wget.download(fileaddress, out = '.'+os.path.sep+zipdir  ,bar=bar_adaptive)
-#     file_name = '.\\output\\data.zip'
     print('wget finished',  flush=True)
     path_to_zip_file = os.path.join(file_name)
     zip_ref = zipfile.ZipFile(path_to_zip_file, 'r')
@@ -89,7 +82,6 @@ if not (database_dir_OK):
             print(fileInDir + '\t\t\t Is dir? Yes',  flush=True)
         else:
             print(fileInDir + '\t\t\t Is dir? No',  flush=True)
-            
     print('Download done...', flush = True)
 else:
     print('Files OK, download not required.', flush = True)
@@ -98,13 +90,16 @@ zero_added =0
 zero_dropped =0
 sub_sample = []
 fileLines =[]
+
 with open(os.path.join('.','driving_log.csv')) as csvfile:
     reader = csv.reader(csvfile)
     ten_counter = 0;
+    general_counter = 0
     next(reader)
     for line in reader:
         if (abs(float(line[3])) > 0.01):
             fileLines.append(line)
+            general_counter = general_counter+1
         else:
             if (ten_counter == 0):
                 fileLines.append(line) 
@@ -112,48 +107,72 @@ with open(os.path.join('.','driving_log.csv')) as csvfile:
             if ten_counter > 4:
                 ten_counter =0
                 
+
+for additional_data_set in additional_data_list:
+    print(os.path.join(additional_data_dir, additional_data_set,'driving_log.csv'))
+#     print(additional_data_dir)
+    additional_data_set_dir =os.path.join(additional_data_dir, additional_data_set)
+    with open(os.path.join(additional_data_set_dir,'driving_log.csv')) as csvfile:
+        reader = csv.reader(csvfile)
+        ten_counter = 0;
+        next(reader)
+        for line in reader:
+            for i in range(0,3):
+                line[i] = additional_data_set_dir + '//' + line[i]
+                fileLines.append(line)
+    
+                
 samples =[]
 steer_abs_sum = 0
 steer_sum = 0
-correction = 0.2
-
-
+correction = 0.15
+recover_correction = 0.15
 for line in fileLines:
-#     steer_angle = -float(line[3])
+#     steer_angle = -float(line[7])
 #     samples.append([line[0], steer_angle, 'front camera - flip'])
 #     steer_abs_sum = steer_abs_sum + abs(steer_angle)
 #     steer_sum = steer_sum + steer_angle    
     for i in range(0,6):
         if  i == 0:
             steer_angle = float(line[3])
+            if 'recovery right' in line[0]:
+                steer_angle = steer_angle- recover_correction
+            if 'recovery left' in line[0]:
+                steer_angle = steer_angle+ recover_correction
             samples.append([line[0], steer_angle, 'front camera'])
             steer_abs_sum = steer_abs_sum + abs(steer_angle)  
             steer_sum = steer_sum + steer_angle                  
         elif i == 1:
-            steer_angle = float(line[3])+correction
-            samples.append([line[1], steer_angle, 'left camera'])
-            steer_abs_sum = steer_abs_sum + abs(steer_angle)
-            steer_sum = steer_sum + steer_angle     
+            if 'recovery right' not in line[0]:
+                steer_angle = float(line[3])+correction
+                samples.append([line[1], steer_angle, 'left camera'])
+                steer_abs_sum = steer_abs_sum + abs(steer_angle)
+                steer_sum = steer_sum + steer_angle     
+
         elif i == 2:
-            steer_angle = float(line[3])-correction
-            samples.append([line[2], steer_angle, 'right camera'])
-            steer_abs_sum = steer_abs_sum + abs(steer_angle)
-            steer_sum = steer_sum + steer_angle
+            if 'recovery left' not in line[0]:            
+                steer_angle = float(line[3])-correction
+                samples.append([line[2], steer_angle, 'right camera'])
+                steer_abs_sum = steer_abs_sum + abs(steer_angle)
+                steer_sum = steer_sum + steer_angle
+
         elif i == 3:
             steer_angle = -float(line[3])
             samples.append([line[0], steer_angle, 'front flip'])
             steer_abs_sum = steer_abs_sum + abs(steer_angle)  
             steer_sum = steer_sum + steer_angle                  
         elif i == 4:
-            steer_angle = -(float(line[3])+correction)
-            samples.append([line[1], steer_angle, 'left flip'])
-            steer_abs_sum = steer_abs_sum + abs(steer_angle)
-            steer_sum = steer_sum + steer_angle     
+            if 'recovery' not in line[0]:
+                steer_angle = -(float(line[3])+correction)
+                samples.append([line[1], steer_angle, 'left flip'])
+                steer_abs_sum = steer_abs_sum + abs(steer_angle)
+                steer_sum = steer_sum + steer_angle     
         elif i == 5:
-            steer_angle = -(float(line[3])-correction)
-            samples.append([line[2], steer_angle, 'right flip'])
-            steer_abs_sum = steer_abs_sum + abs(steer_angle)
-            steer_sum = steer_sum + steer_angle
+            if 'recovery' not in line[0]:
+                steer_angle = -(float(line[3])-correction)
+                samples.append([line[2], steer_angle, 'right flip'])
+                steer_abs_sum = steer_abs_sum + abs(steer_angle)
+                steer_sum = steer_sum + steer_angle
         
 mean_steering = steer_sum/float(len(samples))
 steer_abs_mean = steer_abs_sum/float(len(samples))
@@ -167,7 +186,7 @@ train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 print('Number of initial images: {}'.format(len(train_samples)))
 
 
-def generator(samples, batch_size=100):
+def generator(samples, batch_size=64):
     num_samples = len(samples)
 
     while 1: # Loop forever so the generator never terminates
@@ -181,7 +200,9 @@ def generator(samples, batch_size=100):
                 angle = batch_a_sample[1]
                 path_split = batch_a_sample[0].split('/')
                 converted_path = os.path.join('.',*path_split)
+#                 print(converted_path)
 
+#                 print(converted_path,flush=True)
                 image = cv2.imread(converted_path, cv2.IMREAD_COLOR)[60:135,:,:]
 #                 print(batch_a_sample[2][-3:])
                 if batch_a_sample[2][-4:] == 'flip':
@@ -209,23 +230,23 @@ def generator(samples, batch_size=100):
 
 
 
-train_generator = generator(train_samples, batch_size=100)
-validation_generator = generator(validation_samples, batch_size=20)
+train_generator = generator(train_samples, batch_size=64)
+validation_generator = generator(validation_samples, batch_size=6)
 
 
 
 model.fit_generator(train_generator, samples_per_epoch= len(train_samples), 
                      validation_data=validation_generator, nb_val_samples=len(validation_samples), 
-                     nb_epoch=10)
+                     nb_epoch=20, callbacks=[earlyStopping])
         
 
 
 model.save('model.h5')
 
-
-for j in range(500,2000):
-    image = cv2.imread(fileLines[j][0])[25:100,:,:]
-    image_array = np.asarray([image])
-    image_array = image_array/255.0 - 0.5
-    steering = model.predict(image_array, batch_size=1)
-    print('Prediction: ' +str(steering) + '. Actual: ' + fileLines[j][3])
+# 
+# for j in range(500,2000):
+#     image = cv2.imread(fileLines[j][0])[25:100,:,:]
+#     image_array = np.asarray([image])
+#     image_array = image_array/255.0 - 0.5
+#     steering = model.predict(image_array, batch_size=1)
+#     print('Prediction: ' +str(steering) + '. Actual: ' + fileLines[j][3])

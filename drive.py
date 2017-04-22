@@ -45,7 +45,7 @@ class SimplePIController:
 
 
 controller = SimplePIController(0.05, 0.001)
-set_speed = 9
+set_speed = 15
 controller.set_desired(set_speed)
 FirstSaved =0;
 
@@ -64,48 +64,54 @@ def telemetry(sid, data):
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
 
-        global expanded_image
-        
-#         print('Size before: ' +str(expanded_image.shape))
-#         print('Line before: ' + str(expanded_image[1,1:10,1]))
-        expanded_image=expanded_image[0:300,:,:]
-        
-#         print('Size after: ' +str(expanded_image.shape))
-#         print('Line before: ' + str(expanded_image[1,1:10,1]))
-#         print('Shape rotated array: ' +str(expanded_image.shape))
-
+#         global expanded_image
+#         
+# #         print('Size before: ' +str(expanded_image.shape))
+# #         print('Line before: ' + str(expanded_image[1,1:10,1]))
+#         expanded_image=expanded_image[0:300,:,:]
+#         
+# #         print('Size after: ' +str(expanded_image.shape))
+# #         print('Line before: ' + str(expanded_image[1,1:10,1]))
+# #         print('Shape rotated array: ' +str(expanded_image.shape))
+# 
         image_cropped = np.asarray(image)[60:135,:,:]
         image_cropped = cv2.cvtColor(image_cropped, cv2.COLOR_BGR2RGB)
+        image_cropped = np.asarray([image_cropped])
         image_cropped = image_cropped/255.0 -0.5
-        expanded_image= np.concatenate((image_cropped, expanded_image),0)
-        image_array = np.asarray([expanded_image])
-#         print('Shape image array:' + str(image_array.shape))
-#         print('Shape expanded_image:' + str(expanded_image.shape))
-                
-        if img_n[0] <5:
-            img_n[0] = img_n[0]+1
+
+#         image_cropped = image_cropped/255.0 -0.5
+#         expanded_image= np.concatenate((image_cropped, expanded_image),0)
+#         image_array = np.asarray([expanded_image])
+# #         print('Shape image array:' + str(image_array.shape))
+# #         print('Shape expanded_image:' + str(expanded_image.shape))
+#         print('about to predict')
+        steering_angle = float(model.predict(image_cropped, batch_size=1))
+#         print(steering_angle)
+                            
+#         if img_n[0] <5:
+#             img_n[0] = img_n[0]+1
             
             
         throttle = controller.update(float(speed))
-        steering_angle =0
-        
-        if img_n[0]==5:
-#             print('about to predict')
-            steering_angle = float(model.predict(image_array, batch_size=1))
-            
-            global FirstSaved
-            if FirstSaved == 0:
-                timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
-                cv2.imwrite('{}.jpg'.format(timestamp), (expanded_image+0.5)*int(255))
-                FirstSaved =1
+#         steering_angle =0
+#         
+#         if img_n[0]==5:
+# #             print('about to predict')
+#             steering_angle = float(model.predict(image_array, batch_size=1))
+#             
+#             global FirstSaved
+#             if FirstSaved == 0:
+#                 timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
+#                 cv2.imwrite('{}.jpg'.format(timestamp), (expanded_image+0.5)*int(255))
+#                 FirstSaved =1
+# 
+#             # save frame
+#             if args.image_folder != '':
+#                 timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
+#                 image_filename = os.path.join(args.image_folder, timestamp)
+#                 image.save('{}.jpg'.format(image_filename))
 
-            # save frame
-            if args.image_folder != '':
-                timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
-                image_filename = os.path.join(args.image_folder, timestamp)
-                image.save('{}.jpg'.format(image_filename))
-
-        if steering_angle != 0:
+        if abs(steering_angle) > 0.02:
             print(steering_angle, throttle)
         send_control(steering_angle, throttle)
 
